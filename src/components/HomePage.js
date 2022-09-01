@@ -1,12 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import Header from "./Header";
 import Main from "./Main";
 import Footer from "./Footer";
-
-import api from '../utils/Api';
-import auth from '../utils/Auth';
 
 import ImagePopup from "./Popups/ImagePopup";
 import EditProfilePopup from './Popups/EditProfilePopup';
@@ -15,9 +12,8 @@ import EditAvatarPopup from './Popups/EditAvatarPopup';
 import RemoveCardPopup from './Popups/RemoveCardPopup';
 import { CurrentUserContext } from '../contexts/CurrentUserContext';
 
-export default function HomePage({ authToken, onSignOut, setCurrentUser }) {
+export default function HomePage({ onSignOut, currentUserEmail, cards, onCardLike, onCardRemove, onAddPlace, onEditProfile, onEditAvatar }) {
 	const currentUser = useContext(CurrentUserContext);
-  const [currentUserEmail, setCurrentUserEmail] = useState('');
 
   const [isEditPopupOpen, setProfilePopupState] = useState(false);
   const [isAddPlacePopupOpen, setCardPopupState] = useState(false);
@@ -25,21 +21,8 @@ export default function HomePage({ authToken, onSignOut, setCurrentUser }) {
   const [isImagePopupOpen, setImagePopupState] = useState(false);
   const [popupIsLoading, setPopupIsLoading] = useState(false);
 
-  const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [cardToRemove, setCardToRemove] = useState(null);
-
-  useEffect(() => {
-    authToken && auth.checkToken(authToken)
-      .then(res => setCurrentUserEmail(res.data.email))
-      .catch(err => console.log(err));
-    api.getUserInfo()
-      .then(data => setCurrentUser(data))
-      .catch(err => console.log(err));
-    api.getCohortCards()
-      .then(cardList => setCards(cardList))
-      .catch(err => console.log(err));
-  }, [authToken])
 
   function handleEditAvatarClick() {
     setAvatarPopupState(true);
@@ -72,61 +55,20 @@ export default function HomePage({ authToken, onSignOut, setCurrentUser }) {
     setTimeout(() => { setSelectedCard(null) }, 200);
   }
 
-  function handleCardLike(card, loadingFunc) {
-    const likedByUser = card.likes.some(user => user._id === currentUser._id );
-    const request = !likedByUser ? api.putCardLike(card._id) : api.removeCardLike(card._id);
-
-    loadingFunc(true);
-    request
-      .then(res => {
-        setCards(cards.map((cardItem) => res._id === cardItem._id ? res : cardItem));
-      })
-      .catch(err => console.log(err))
-      .finally(() => loadingFunc(false));
-  }
-
   function handleCardRemove(card) {
-    setPopupIsLoading(true);
-    api.deleteCard(card._id)
-      .then(() => {
-        setCards(cards.filter((cardItem) => cardItem._id !== card._id && cardItem ));
-        closeAllPopups();
-      })
-      .catch(err => console.log(err))
-      .finally(() => setPopupIsLoading(false));
+    onCardRemove(card, setPopupIsLoading, closeAllPopups);
   }
 
   function handleAddPlace({ name, link }) {
-    setPopupIsLoading(true);
-    api.postSectionItem(name.value, link.value)
-      .then(res => {
-        setCards([res, ...cards]);
-        closeAllPopups();
-      })
-      .catch(err => console.log(err))
-      .finally(() => setPopupIsLoading(false));
+    onAddPlace(name.value, link.value, setPopupIsLoading, closeAllPopups)
   }
 
   function handleEditProfile({ name, about }) {
-    setPopupIsLoading(true);
-    api.patchUserInfo(name.value, about.value)
-      .then(res => {
-        setCurrentUser(res);
-        closeAllPopups();
-      })
-      .catch(err => console.log(err))
-      .finally(() => setPopupIsLoading(false));
+    onEditProfile(name.value, about.value, setPopupIsLoading, closeAllPopups)
   }
 
   function handleEditAvatar({ link }) {
-    setPopupIsLoading(true);
-    api.patchUserAvatar(link)
-      .then(res => {
-        setCurrentUser(res);
-        closeAllPopups();
-      })
-      .catch(err => console.log(err))
-      .finally(() => setPopupIsLoading(false));
+    onEditAvatar(link, setPopupIsLoading, closeAllPopups)
   }
 
 	return(
@@ -153,7 +95,7 @@ export default function HomePage({ authToken, onSignOut, setCurrentUser }) {
           onCardRemoval={handleRemoveCardClick}
           cards={cards}
           onCardClick={handleCardClick}
-          onCardLike={handleCardLike}
+          onCardLike={onCardLike}
         />
       }
       <ImagePopup 

@@ -1,33 +1,33 @@
 import Form from "../Form";
 import Header from "../Header";
 import useInputHandling from "../../custom_hooks/useInputHandling";
-import { Link, useHistory } from "react-router-dom";
-import auth from "../../utils/Auth";
+import { Link, useHistory, Redirect } from "react-router-dom";
+import InfoToolTipPopup from "../Popups/InfoToolTipPopup";
 import { useState } from "react";
 
-export default function Login({ onSignIn }) {
+export default function Login({ onSubmit }) {
   const history = useHistory();
   const [ isLoading, setIsLoading ] = useState(false);
+  const [ isPopupOpen, setPopupState ] = useState(false);
+  const [ isRequestSucceeded, setRequestState ] = useState(false);
   const hookConfig = {
     defaultInputs: { email: { value: '' }, password: { value: '' } },
     defaultInputIsValidState: false
   }
   const [ inputs, isValid, handleInputsUpdate, handleChange ] = useInputHandling(hookConfig);
 
+  function closePopup() {
+    setPopupState(false);
+  }
+
   function handleSubmit(evt) {
     evt.preventDefault();
     
-    setIsLoading(true);
-    auth.login(inputs.email.value, inputs.password.value)
-      .then((data) => { 
-        onSignIn(data.token);
-        history.push('/');
-      })
-      .catch((err) => console.log(err))
-      .finally(() => setIsLoading(false));
+    onSubmit(setIsLoading, setPopupState, setRequestState, inputs, history);
   }
   return(
     <>
+      { isRequestSucceeded && <Redirect to='/' />}
       <Header 
         redirectLink={
           <Link className="header__link header__link_type_auth" to="sign-up">Регистрация</Link>
@@ -75,6 +75,11 @@ export default function Login({ onSignIn }) {
             </div>
           </fieldset>
         } 
+      />
+      <InfoToolTipPopup 
+        isOpen={isPopupOpen}
+        onClose={closePopup}
+        isSucceeded={isRequestSucceeded}
       />
     </>
   )

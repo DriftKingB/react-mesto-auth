@@ -3,10 +3,11 @@ import Header from "../Header";
 import useInputHandling from "../../custom_hooks/useInputHandling";
 import { useState } from "react";
 import InfoToolTipPopup from "../Popups/InfoToolTipPopup";
-import { Link, Redirect } from "react-router-dom";
-import auth from "../../utils/Auth";
+import { Link, Redirect, useHistory } from "react-router-dom";
 
-export default function Register() {
+
+export default function Register({ onSubmit }) {
+  const history = useHistory();
   const [ isLoading, setIsLoading ] = useState(false);
   const [ isPopupOpen, setPopupState ] = useState(false);
   const [ isRequestSucceeded, setRequestState ] = useState(false);
@@ -23,17 +24,7 @@ export default function Register() {
   function handleSubmit(evt) {
     evt.preventDefault();
     
-    setIsLoading(true);
-    auth.register(inputs.email.value, inputs.password.value)
-      .then(() => setRequestState(true))
-      .catch((err) => {
-        console.log(err);
-        setRequestState(false);
-      })
-      .finally(() => {
-        setIsLoading(false);
-        setPopupState(true);
-      });
+    onSubmit(setIsLoading, setPopupState, setRequestState, inputs, history);
   }
 
   return(

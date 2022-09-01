@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { CurrentUserContext } from "../../contexts/CurrentUserContext";
 import useInputHandling from "../../custom_hooks/useInputHandling";
 import PopupWithForm from "./PopupWithForm";
@@ -10,10 +10,6 @@ export default function EditProfilePopup({ isOpen, isLoading, onClose, onSubmit 
     defaultInputIsValidState: true
   }
   const [ inputs, isValid, handleInputsUpdate, handleChange ] = useInputHandling(hookConfig, isOpen);
-
-  // useEffect(() => {
-  //   console.log('popup', isValid)
-  // }, [isValid])
 
   useEffect(() => {
     const delay = isOpen ? 0 : 200; 
